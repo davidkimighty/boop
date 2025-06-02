@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace boop
 {
@@ -11,27 +9,18 @@ namespace boop
     [DisallowMultipleComponent]
     public abstract class Interactable : UIBehaviour, IMoveHandler,
         IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler,
-        ISelectHandler, IDeselectHandler,
-        IPointerClickHandler, ISubmitHandler, ICanvasElement
+        ISelectHandler, IDeselectHandler
     {
         public enum State
         {
             Normal,
             Hovered,
             Pressed,
-            Selected,
             Disabled
         }
 
-        public event Action<Interactable> OnStateNormal;
-        public event Action<Interactable> OnStateHovered;
-        public event Action<Interactable> OnStatePressed;
-        public event Action<Interactable> OnStateSelected;
-        public event Action<Interactable> OnStateDisabled;
-
         private static List<Interactable> s_interactables = new();
-
-        [SerializeField] protected bool _isSelectable;
+        
         protected bool _isInteractable = true;
         protected bool _groupAllowInteraction = true;
         protected bool _isPointerDown;
@@ -53,6 +42,7 @@ namespace boop
         protected override void OnDisable()
         {
             s_interactables.Remove(this);
+
             ClearState();
         }
 
@@ -95,8 +85,7 @@ namespace boop
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            if (eventData.button != PointerEventData.InputButton.Left)
-                return;
+            if (eventData.button != PointerEventData.InputButton.Left) return;
 
             _isPointerDown = false;
             EvaluateAndTransition(eventData);
@@ -124,31 +113,6 @@ namespace boop
         {
             _hasSelection = false;
             EvaluateAndTransition(eventData);
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            
-        }
-
-        public void OnSubmit(BaseEventData eventData)
-        {
-            
-        }
-
-        public void Rebuild(CanvasUpdate executing)
-        {
-            
-        }
-
-        public void LayoutComplete()
-        {
-            
-        }
-
-        public void GraphicUpdateComplete()
-        {
-            
         }
 
         public virtual bool IsInteractable()
@@ -224,16 +188,26 @@ namespace boop
             return IsActive() && _isPointerInside && _isPointerDown;
         }
 
-        protected void UpdateCurrentState(BaseEventData eventData)
+        protected State GetCurrentState(BaseEventData eventData)
         {
+            State state;
             if (!IsInteractable())
-                _currentState = State.Disabled;
+                state = State.Disabled;
             else if (IsPressed())
-                _currentState = State.Pressed;
+                state = State.Pressed;
             else if (IsHovered(eventData))
-                _currentState = State.Hovered;
+                state = State.Hovered;
             else
-                _currentState = State.Normal;
+                state = State.Normal;
+            return state;
+        }
+
+        protected virtual void ClearState()
+        {
+            _currentState = State.Normal;
+            _isPointerDown = false;
+            _isPointerInside = false;
+            _hasSelection = false;
         }
 
         protected virtual void PerformStateTransition(State state, bool instant)
@@ -252,50 +226,37 @@ namespace boop
                 case State.Disabled:
                     DisabledTransition(instant);
                     break;
-                default: NormalTransition(instant);
-                    break;
             }
-        }
-
-        protected virtual void ClearState()
-        {
-            _currentState = State.Normal;
-            _isPointerDown = false;
-            _isPointerInside = false;
-            _hasSelection = false;
-
-            NormalTransition(true);
         }
 
         protected virtual void NormalTransition(bool instant)
         {
-            OnStateNormal?.Invoke(this);
-            Debug.Log($"Current State: Normal");
+            //Debug.Log($"Current State: Normal");
         }
 
         protected virtual void HoveredTransition(bool instant)
         {
-            OnStateHovered?.Invoke(this);
-            Debug.Log($"Current State: Hovered");
+            //Debug.Log($"Current State: Hovered");
         }
 
         protected virtual void PressedTransition(bool instant)
         {
-            OnStatePressed?.Invoke(this);
-            Debug.Log($"Current State: Pressed");
+            //Debug.Log($"Current State: Pressed");
         }
 
         protected virtual void DisabledTransition(bool instant)
         {
-            OnStateDisabled?.Invoke(this);
-            Debug.Log($"Current State: Disabled");
+            //Debug.Log($"Current State: Disabled");
         }
 
         private void EvaluateAndTransition(BaseEventData eventData)
         {
             if (!IsActive()) return;
 
-            UpdateCurrentState(eventData);
+            State state = GetCurrentState(eventData);
+            if (state == _currentState) return;
+
+            _currentState = state;
             PerformStateTransition(_currentState, false);
         }
 
