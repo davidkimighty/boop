@@ -10,8 +10,8 @@
   },
   "samples": [
     {
-      "displayName": "Simple Audio Player",
-      "path": "Samples~/SimpleAudioPlayer"
+      "displayName": "2D Buttons",
+      "path": "Samples~/2DButtons"
     }
   ]
 }
