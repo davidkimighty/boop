@@ -1,0 +1,16 @@
+{
+    "name": "boop.Sample.2dpanel",
+    "rootNamespace": "",
+    "references": [
+        "GUID:cd48c43600c51af4b9230844a6f156ed"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
