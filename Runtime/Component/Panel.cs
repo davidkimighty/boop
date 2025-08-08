@@ -1,10 +1,13 @@
+using System;
 using UnityEngine;
 
 namespace boop
 {
-    public abstract class Panel : MonoBehaviour, IUIElement
+    public abstract class Panel : MonoBehaviour, IView
     {
-        public virtual void Initialize(ViewModel viewModel) { }
+        public Guid Id { get; private set; }
+
+        public virtual void Initialize(IViewModel viewModel) { }
 
         public virtual void Show()
         {
@@ -15,5 +18,10 @@ namespace boop
         {
             gameObject.SetActive(false);
         }
-    }   
+
+        void IView.AssignId(Guid id)
+        {
+            Id = id;
+        }
+    }
 }

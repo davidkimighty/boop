@@ -1,26 +1,26 @@
 using boop;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using Button = boop.Button;
 
 public class CountPanel : Panel
 {
+    public event Action OnCountClick;
+
     [SerializeField] private Canvas _canvas;
     [SerializeField] private Button _countButton;
     [SerializeField] private Text _countText;
 
     private CountViewModel _viewModel;
 
-    private void Start()
-    {
-        Hide();
-    }
-
-    public override void Initialize(ViewModel viewModel)
+    public override void Initialize(IViewModel viewModel)
     {
         _viewModel = viewModel as CountViewModel;
         _viewModel.OnDataChange += HandleUpdateCount;
-        _countButton.OnClick += HandleCount;
+        Hide();
+
+        _countButton.OnClick += () => OnCountClick?.Invoke();
     }
 
     public override void Show()
@@ -35,11 +35,6 @@ public class CountPanel : Panel
 
     private void HandleUpdateCount()
     {
-        _countText.text = _viewModel.Count.ToString();
-    }
-
-    private void HandleCount()
-    {
-        _viewModel.Count0To9();
+        _countText.text = _viewModel.Count;
     }
 }

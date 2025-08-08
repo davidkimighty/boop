@@ -5,55 +5,77 @@ namespace boop
 {
     public class UIRegistry
     {
-        private Dictionary<Type, IUIElement> _uiElements = new();
-        private Stack<IUIElement> _uiElementStack = new();
+        private Dictionary<Type, List<IView>> _views = new();
+        private Dictionary<Guid, IView> _viewsById = new();
+        private Stack<IView> _viewStack = new();
 
-        public void Register<T>(T uiElement) where T : IUIElement
+        public Guid Register(IView view)
         {
-            _uiElements[typeof(T)] = uiElement;
-            uiElement.Hide();
+            var id = Guid.NewGuid();
+            view.AssignId(id);
+
+            Type viewType = view.GetType();
+            if (!_views.TryGetValue(viewType, out List<IView> list))
+                list = _views[viewType] = new List<IView>();
+
+            list.Add(view);
+            _viewsById[id] = view;
+            view.Hide();
+            return id;
         }
 
-        public void Unregister<T>(T uiElement) where T : IUIElement
+        public void Unregister(IView view)
         {
-            _uiElements.Remove(uiElement.GetType());
+            _views.Remove(view.GetType());
         }
 
-        public void Show(Type type)
+        public void ShowView(Guid id)
         {
-            if (!_uiElements.TryGetValue(type, out IUIElement uiElement)) return;
+            if (!_viewsById.TryGetValue(id, out IView view)) return;
 
-            if (_uiElementStack.Count > 0)
-                _uiElementStack.Peek().Hide();
-            _uiElementStack.Push(uiElement);
+            if (_viewStack.Count > 0)
+                _viewStack.Peek().Hide();
 
-            uiElement.Show();
+            _viewStack.Push(view);
+            view.Show();
         }
 
-        public void Hide(Type type)
+        public void ShowView(Type type)
         {
-            if (!_uiElements.TryGetValue(type, out IUIElement uiElement)) return;
+            if (!_views.TryGetValue(type, out var list) || list.Count == 0) return;
+            ShowView(list[0].Id);
+        }
 
-            if (_uiElementStack.Count > 0 && _uiElementStack.Peek() == uiElement)
-                _uiElementStack.Pop();
+        public void HideView(Guid id)
+        {
+            if (!_viewsById.TryGetValue(id, out IView view)) return;
 
-            uiElement.Hide();
+            if (_viewStack.Count > 0 && _viewStack.Peek() == view)
+                _viewStack.Pop();
+
+            view.Hide();
+        }
+
+        public void HideView(Type type)
+        {
+            if (!_views.TryGetValue(type, out var list) || list.Count == 0) return;
+            HideView(list[0].Id);
         }
 
         public void Back()
         {
-            if (_uiElementStack.Count == 0) return;
+            if (_viewStack.Count == 0) return;
 
-            _uiElementStack.Pop().Hide();
+            _viewStack.Pop().Hide();
 
-            if (_uiElementStack.Count > 0)
-                _uiElementStack.Peek().Show();
+            if (_viewStack.Count > 0)
+                _viewStack.Peek().Show();
         }
 
         public void HideAll()
         {
-            while (_uiElementStack.Count > 0)
-                _uiElementStack.Pop().Hide();
+            while (_viewStack.Count > 0)
+                _viewStack.Pop().Hide();
         }
     }
 }

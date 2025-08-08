@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 
 namespace boop
 {
-    public abstract class ViewModel : IDisposable
+    public abstract class ViewModel : IViewModel, IDisposable
     {
         public event Action OnDataChange;
 
@@ -11,9 +12,13 @@ namespace boop
             OnDataChange = null;
         }
 
-        protected void RaiseDataChange()
+        protected bool SetProperty<T>(ref T field, T value)
         {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+
+            field = value;
             OnDataChange?.Invoke();
+            return true;
         }
     }
 }

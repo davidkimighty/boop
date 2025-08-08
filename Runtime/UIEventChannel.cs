@@ -6,29 +6,29 @@ namespace boop
     [CreateAssetMenu(fileName = "UIEventChannel", menuName = "boop/EventChannel/UIEventChannel")]
     public class UIEventChannel : ScriptableObject
     {
-        public event Action<IUIElement> OnRequestRegisterUI;
-        public event Action<IUIElement> OnRequestUnregisterUI;
-        public event Action<Type> OnRequstShowUI;
-        public event Action<Type> OnRequestHideUI;
+        public event Func<IView, Guid> RegisterUIRequested;
+        public event Action<IView> UnregisterUIRequested;
+        public event Action<Type, Guid?> ShowUIRequested;
+        public event Action<Type, Guid?> HideUIRequested;
 
-        public void RequestRegisterUI(IUIElement uiElement)
+        public Guid RequestRegisterUI(IView uiElement)
         {
-            OnRequestRegisterUI?.Invoke(uiElement);
+            return RegisterUIRequested != null ? RegisterUIRequested.Invoke(uiElement) : Guid.Empty;
         }
 
-        public void RequestUnregisterUI(IUIElement uiElement)
+        public void RequestUnregisterUI(IView uiElement)
         {
-            OnRequestUnregisterUI?.Invoke(uiElement);
+            UnregisterUIRequested?.Invoke(uiElement);
         }
 
-        public void RequestShowUI<T>() where T : IUIElement
+        public void RequestShowUI<T>(Guid? id = null) where T : IView
         {
-            OnRequstShowUI?.Invoke(typeof(T));
+            ShowUIRequested?.Invoke(typeof(T), id);
         }
 
-        public void RequestHideUI<T>() where T : IUIElement
+        public void RequestHideUI<T>(Guid? id = null) where T : IView
         {
-            OnRequestHideUI?.Invoke(typeof(T));
+            HideUIRequested?.Invoke(typeof(T), id);
         }
     }
 }

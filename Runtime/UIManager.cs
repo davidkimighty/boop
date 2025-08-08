@@ -12,38 +12,44 @@ namespace boop
         private void Awake()
         {
             _uiRegistry = new UIRegistry();
-            _uiEventChannel.OnRequestRegisterUI += HandleRegister;
-            _uiEventChannel.OnRequestUnregisterUI += HandleUnregister;
-            _uiEventChannel.OnRequstShowUI += HandleShow;
-            _uiEventChannel.OnRequestHideUI += HandleHide;
+            _uiEventChannel.RegisterUIRequested += HandleRegister;
+            _uiEventChannel.UnregisterUIRequested += HandleUnregister;
+            _uiEventChannel.ShowUIRequested += HandleShow;
+            _uiEventChannel.HideUIRequested += HandleHide;
         }
 
         private void OnDestroy()
         {
-            _uiEventChannel.OnRequestRegisterUI -= HandleRegister;
-            _uiEventChannel.OnRequestUnregisterUI -= HandleUnregister;
-            _uiEventChannel.OnRequstShowUI -= HandleShow;
-            _uiEventChannel.OnRequestHideUI -= HandleHide;
+            _uiEventChannel.RegisterUIRequested -= HandleRegister;
+            _uiEventChannel.UnregisterUIRequested -= HandleUnregister;
+            _uiEventChannel.ShowUIRequested -= HandleShow;
+            _uiEventChannel.HideUIRequested -= HandleHide;
         }
 
-        private void HandleRegister(IUIElement uiElement)
+        private Guid HandleRegister(IView view)
         {
-            _uiRegistry.Register(uiElement);
+            return _uiRegistry.Register(view);
         }
 
-        private void HandleUnregister(IUIElement uiElement)
+        private void HandleUnregister(IView view)
         {
-            _uiRegistry.Unregister(uiElement);
+            _uiRegistry.Unregister(view);
         }
 
-        private void HandleShow(Type type)
+        private void HandleShow(Type type, Guid? id)
         {
-            _uiRegistry.Show(type);
+            if (id.HasValue)
+                _uiRegistry.ShowView(id.Value);
+            else
+                _uiRegistry.ShowView(type);
         }
 
-        private void HandleHide(Type type)
+        private void HandleHide(Type type, Guid? id)
         {
-            _uiRegistry.Hide(type);
+            if (id.HasValue)
+                _uiRegistry.HideView(id.Value);
+            else
+                _uiRegistry.HideView(type);
         }
     }
 }

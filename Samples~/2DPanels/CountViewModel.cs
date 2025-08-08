@@ -3,27 +3,28 @@ using boop;
 public class CountViewModel : ViewModel
 {
     private CountModel _countModel;
-    private int _count = 0;
+    private string _count;
 
-    public int Count
+    public string Count
     {
         get => _count;
-        set
-        {
-            _count = value;
-            RaiseDataChange();
-        }
+        set => SetProperty(ref _count, value);
     }
 
     public CountViewModel(CountModel countModel)
     {
         _countModel = countModel;
-        _count = _countModel.Count;
+        UpdateCount();
     }
 
     public void Count0To9()
     {
-        Count = (_count + 1) % 10;
-        _countModel.Count = Count;
+        _countModel.Count0To9();
+        UpdateCount();
+    }
+
+    private void UpdateCount()
+    {
+        Count = _countModel.Count.ToString();
     }
 }
