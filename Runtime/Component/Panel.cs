@@ -7,7 +7,7 @@ namespace boop
     {
         public Guid Id { get; private set; }
 
-        public virtual void Initialize(IViewModel viewModel) { }
+        public abstract void Initialize(IViewModel viewModel);
 
         public virtual void Show()
         {

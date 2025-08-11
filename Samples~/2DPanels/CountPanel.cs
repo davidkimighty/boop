@@ -17,7 +17,7 @@ public class CountPanel : Panel
     public override void Initialize(IViewModel viewModel)
     {
         _viewModel = viewModel as CountViewModel;
-        _viewModel.OnDataChange += HandleUpdateCount;
+        _viewModel.OnCountUpdated += HandleUpdateCount;
         Hide();
 
         _countButton.OnClick += () => OnCountClick?.Invoke();
