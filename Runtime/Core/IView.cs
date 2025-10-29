@@ -1,15 +1,13 @@
-using System;
+using UnityEngine;
 
 namespace boop
 {
     public interface IView
     {
-        Guid Id { get; }
+        Canvas Canvas { get; }
 
         void Initialize(IViewModel viewModel);
         void Show();
         void Hide();
-
-        internal void AssignId(Guid id);
     }
 }

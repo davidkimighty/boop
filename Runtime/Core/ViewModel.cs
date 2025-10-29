@@ -1,29 +1,29 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace boop
 {
-    public abstract class ViewModel : IViewModel, IDisposable
+    public abstract class ViewModel : IViewModel
     {
-        public event Action OnDataChange;
+        public event Action<string> OnDataChange;
 
-        public virtual void Dispose()
+        protected void InvokeDataChange([CallerMemberName] string propertyName = null)
         {
-            OnDataChange = null;
+            OnDataChange?.Invoke(propertyName);
         }
 
-        protected bool SetProperty<T>(ref T field, T value)
+        protected bool SetProperty<T>(ref T backingField, T newValue, [CallerMemberName] string propertyName = null)
         {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-
-            field = value;
-            OnDataChange?.Invoke();
+            if (EqualityComparer<T>.Default.Equals(backingField, newValue)) return false;
+            backingField = newValue;
+            InvokeDataChange(propertyName);
             return true;
         }
     }
 
     public interface IViewModel
     {
-        event Action OnDataChange;
+        event Action<string> OnDataChange;
     }
 }

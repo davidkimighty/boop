@@ -1,27 +1,24 @@
-using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace boop
 {
-    public abstract class Panel : MonoBehaviour, IView
+    public abstract class Panel : UIBehaviour, IElement, IView
     {
-        public Guid Id { get; private set; }
+        [SerializeField] protected Canvas _canvas;
+
+        public Canvas Canvas => _canvas;
 
         public abstract void Initialize(IViewModel viewModel);
 
         public virtual void Show()
         {
-            gameObject.SetActive(true);
+            Canvas.enabled = true;
         }
 
         public virtual void Hide()
         {
-            gameObject.SetActive(false);
-        }
-
-        void IView.AssignId(Guid id)
-        {
-            Id = id;
+            Canvas.enabled = false;
         }
     }
 }

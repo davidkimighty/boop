@@ -7,7 +7,7 @@ namespace boop
     [ExecuteInEditMode]
     [SelectionBase]
     [DisallowMultipleComponent]
-    public abstract class Interactable : UIBehaviour, IMoveHandler,
+    public abstract class Interactable : UIBehaviour, IElement, IMoveHandler,
         IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler,
         ISelectHandler, IDeselectHandler
     {

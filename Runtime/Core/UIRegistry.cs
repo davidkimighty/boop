@@ -5,77 +5,66 @@ namespace boop
 {
     public class UIRegistry
     {
-        private Dictionary<Type, List<IView>> _views = new();
-        private Dictionary<Guid, IView> _viewsById = new();
-        private Stack<IView> _viewStack = new();
+        public event Action<IView> OnShowView;
+        public event Action<IView> OnHideView;
 
-        public Guid Register(IView view)
+        private Dictionary<string, IElement> _elements = new();
+        private List<IView> _activeViews = new();
+
+        public void Register(string id, IElement ui)
         {
-            var id = Guid.NewGuid();
-            view.AssignId(id);
-
-            Type viewType = view.GetType();
-            if (!_views.TryGetValue(viewType, out List<IView> list))
-                list = _views[viewType] = new List<IView>();
-
-            list.Add(view);
-            _viewsById[id] = view;
-            view.Hide();
-            return id;
+            if (!_elements.ContainsKey(id))
+                _elements[id] = ui;
         }
 
-        public void Unregister(IView view)
+        public void Unregister(string id)
         {
-            _views.Remove(view.GetType());
+            _elements.Remove(id);
         }
 
-        public void ShowView(Guid id)
+        public void ShowView(string id, bool bringToFront = true)
         {
-            if (!_viewsById.TryGetValue(id, out IView view)) return;
+            if (!_elements.TryGetValue(id, out IElement element)) return;
 
-            if (_viewStack.Count > 0)
-                _viewStack.Peek().Hide();
+            var view = element as IView;
+            if (view == null) return;
 
-            _viewStack.Push(view);
+            if (bringToFront)
+            {
+                // resort view order
+            }
+
+            _activeViews.Add(view);
             view.Show();
+            OnShowView?.Invoke(view);
         }
 
-        public void ShowView(Type type)
+        public void HideView(string id)
         {
-            if (!_views.TryGetValue(type, out var list) || list.Count == 0) return;
-            ShowView(list[0].Id);
-        }
+            if (!_elements.TryGetValue(id, out IElement element)) return;
 
-        public void HideView(Guid id)
-        {
-            if (!_viewsById.TryGetValue(id, out IView view)) return;
-
-            if (_viewStack.Count > 0 && _viewStack.Peek() == view)
-                _viewStack.Pop();
+            var view = element as IView;
+            if (view == null) return;
 
             view.Hide();
-        }
-
-        public void HideView(Type type)
-        {
-            if (!_views.TryGetValue(type, out var list) || list.Count == 0) return;
-            HideView(list[0].Id);
-        }
-
-        public void Back()
-        {
-            if (_viewStack.Count == 0) return;
-
-            _viewStack.Pop().Hide();
-
-            if (_viewStack.Count > 0)
-                _viewStack.Peek().Show();
+            _activeViews.Remove(view);
+            // resort view order
+            OnHideView?.Invoke(view);
         }
 
         public void HideAll()
         {
-            while (_viewStack.Count > 0)
-                _viewStack.Pop().Hide();
+            foreach (IView view in _activeViews)
+            {
+                view.Hide();
+                OnHideView?.Invoke(view);
+            }
+            _activeViews.Clear();
         }
+    }
+
+    public interface IElement
+    {
+
     }
 }
