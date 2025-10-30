@@ -5,11 +5,11 @@ namespace boop
 {
     public class UIRegistry
     {
-        public event Action<IView> OnShowView;
-        public event Action<IView> OnHideView;
+        public event Action<IPanel> OnShowPanel;
+        public event Action<IPanel> OnHidePanel;
 
         private Dictionary<string, IElement> _elements = new();
-        private List<IView> _activeViews = new();
+        private List<IPanel> _activePanels = new();
 
         public void Register(string id, IElement ui)
         {
@@ -22,44 +22,44 @@ namespace boop
             _elements.Remove(id);
         }
 
-        public void ShowView(string id, bool bringToFront = true)
+        public void ShowPanel(string id, bool bringToFront = true)
         {
             if (!_elements.TryGetValue(id, out IElement element)) return;
 
-            var view = element as IView;
-            if (view == null) return;
+            var panel = element as IPanel;
+            if (panel == null) return;
 
             if (bringToFront)
             {
                 // resort view order
             }
 
-            _activeViews.Add(view);
-            view.Show();
-            OnShowView?.Invoke(view);
+            _activePanels.Add(panel);
+            panel.Show();
+            OnShowPanel?.Invoke(panel);
         }
 
-        public void HideView(string id)
+        public void HidePanel(string id)
         {
             if (!_elements.TryGetValue(id, out IElement element)) return;
 
-            var view = element as IView;
-            if (view == null) return;
+            var panel = element as IPanel;
+            if (panel == null) return;
 
-            view.Hide();
-            _activeViews.Remove(view);
+            panel.Hide();
+            _activePanels.Remove(panel);
             // resort view order
-            OnHideView?.Invoke(view);
+            OnHidePanel?.Invoke(panel);
         }
 
         public void HideAll()
         {
-            foreach (IView view in _activeViews)
+            foreach (IPanel panel in _activePanels)
             {
-                view.Hide();
-                OnHideView?.Invoke(view);
+                panel.Hide();
+                OnHidePanel?.Invoke(panel);
             }
-            _activeViews.Clear();
+            _activePanels.Clear();
         }
     }
 

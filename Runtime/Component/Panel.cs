@@ -3,13 +3,11 @@ using UnityEngine.EventSystems;
 
 namespace boop
 {
-    public abstract class Panel : UIBehaviour, IElement, IView
+    public abstract class Panel : UIBehaviour, IElement, IPanel, IView
     {
         [SerializeField] protected Canvas _canvas;
 
         public Canvas Canvas => _canvas;
-
-        public abstract void Initialize(IViewModel viewModel);
 
         public virtual void Show()
         {
@@ -20,5 +18,7 @@ namespace boop
         {
             Canvas.enabled = false;
         }
+
+        public virtual void Initialize(IViewModel viewModel) { }
     }
 }

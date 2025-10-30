@@ -11,8 +11,8 @@ namespace boop
         private void Awake()
         {
             _uiRegistry = new UIRegistry();
-            _uiRegistry.OnShowView += _eventChannel.RaiseOnShowView;
-            _uiRegistry.OnHideView += _eventChannel.RaiseOnHideView;
+            _uiRegistry.OnShowPanel += _eventChannel.RaiseShowPanel;
+            _uiRegistry.OnHidePanel += _eventChannel.RaiseHidePanel;
         }
 
         public void Register(string id, IElement element)
@@ -27,12 +27,12 @@ namespace boop
 
         public void ShowView(string id, bool bringToFront = true)
         {
-            _uiRegistry.ShowView(id, bringToFront);
+            _uiRegistry.ShowPanel(id, bringToFront);
         }
 
         public void HideView(string id)
         {
-            _uiRegistry.HideView(id);
+            _uiRegistry.HidePanel(id);
         }
     }
 }
