@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -7,7 +8,7 @@ namespace boop
     [ExecuteInEditMode]
     [SelectionBase]
     [DisallowMultipleComponent]
-    public abstract class Interactable : UIBehaviour, IElement, IMoveHandler,
+    public abstract class Interactable : UIBehaviour, IUIElement, IMoveHandler,
         IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler,
         ISelectHandler, IDeselectHandler
     {
@@ -18,6 +19,9 @@ namespace boop
             Pressed,
             Disabled
         }
+
+        public event Action<EntityId> OnShow;
+        public event Action<EntityId> OnHide;
 
         private static List<Interactable> s_interactables = new();
         
@@ -52,6 +56,18 @@ namespace boop
             PerformStateTransition(_currentState, true);
         }
 #endif
+
+        public virtual void Show()
+        {
+            gameObject.SetActive(true);
+            OnShow?.Invoke(GetEntityId());
+        }
+
+        public virtual void Hide()
+        {
+            gameObject.SetActive(false);
+            OnHide?.Invoke(GetEntityId());
+        }
 
         public virtual void OnMove(AxisEventData eventData)
         {
