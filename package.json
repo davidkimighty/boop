@@ -10,8 +10,8 @@
   },
   "samples": [
     {
-      "displayName": "2D Buttons",
-      "path": "Samples~/2DButtons"
+      "displayName": "Buttons",
+      "path": "Samples~/Buttons"
     }
   ]
 }
