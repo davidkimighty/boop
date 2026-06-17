@@ -23,7 +23,9 @@ namespace boop
         public event Action<EntityId> OnShow;
         public event Action<EntityId> OnHide;
 
-        private static List<Interactable> s_interactables = new();
+        protected static List<Interactable> s_interactables = new();
+
+        [SerializeField] protected StateTransition[] _transitions;
         
         protected bool _isInteractable = true;
         protected bool _groupAllowInteraction = true;
@@ -31,6 +33,8 @@ namespace boop
         protected bool _isPointerInside;
         protected bool _hasSelection;
         protected State _currentState;
+
+        protected virtual bool IsSelected() => false;
 
         protected override void OnEnable()
         {
@@ -40,7 +44,7 @@ namespace boop
             if (_hasSelection)
                 state = State.Hovered;
             _currentState = state;
-            PerformStateTransition(_currentState, true);
+            PerformTransition(_currentState, IsSelected());
         }
 
         protected override void OnDisable()
@@ -53,7 +57,7 @@ namespace boop
 #if UNITY_EDITOR
         protected override void OnValidate()
         {
-            PerformStateTransition(_currentState, true);
+            PerformTransition(_currentState, IsSelected(), true);
         }
 #endif
 
@@ -92,9 +96,6 @@ namespace boop
         {
             if (eventData.button != PointerEventData.InputButton.Left) return;
 
-            if (IsInteractable())
-                EventSystem.current.SetSelectedGameObject(gameObject, eventData);
-
             _isPointerDown = true;
             EvaluateAndTransition(eventData);
         }
@@ -109,12 +110,18 @@ namespace boop
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            if (IsInteractable())
+                EventSystem.current.SetSelectedGameObject(gameObject, eventData);
+            
             _isPointerInside = true;
             EvaluateAndTransition(eventData);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (EventSystem.current.currentSelectedGameObject == gameObject)
+                EventSystem.current.SetSelectedGameObject(null, eventData);
+
             _isPointerInside = false;
             EvaluateAndTransition(eventData);
         }
@@ -134,13 +141,6 @@ namespace boop
         public virtual bool IsInteractable()
         {
             return _isInteractable && _groupAllowInteraction;
-        }
-
-        public virtual void Select()
-        {
-            if (EventSystem.current.alreadySelecting) return;
-
-            EventSystem.current.SetSelectedGameObject(gameObject);
         }
 
         public Interactable FindInteractable(Vector3 dir)
@@ -188,10 +188,9 @@ namespace boop
             if (!IsActive() || IsPressed()) return false;
 
             bool selected = _hasSelection;
-            if (eventData is PointerEventData && eventData is PointerEventData pointerData)
+            if (eventData is PointerEventData pointerData)
             {
-                selected |= (_isPointerDown && !_isPointerInside && pointerData.pointerPress == gameObject)
-                    || (!_isPointerDown && _isPointerInside && pointerData.pointerPress == gameObject)
+                selected |= (!_isPointerDown && _isPointerInside && pointerData.pointerPress == gameObject)
                     || (!_isPointerDown && _isPointerInside && pointerData.pointerPress == null);
             }
             else
@@ -204,7 +203,7 @@ namespace boop
             return IsActive() && _isPointerInside && _isPointerDown;
         }
 
-        protected State GetCurrentState(BaseEventData eventData)
+        protected virtual State GetCurrentState(BaseEventData eventData)
         {
             State state;
             if (!IsInteractable())
@@ -226,43 +225,29 @@ namespace boop
             _hasSelection = false;
         }
 
-        protected virtual void PerformStateTransition(State state, bool instant)
+        protected virtual void PerformTransition(State state, bool selected, bool instant = false)
         {
-            switch (state)
+            if (_transitions == null) return;
+
+            for (int i = 0; i < _transitions.Length; ++i)
+                _transitions[i]?.Transition(state, selected, instant);
+
+            // Debug.Log($"Current State: {state}");
+        }
+
+        protected virtual async Awaitable PerformDelayedTransitionAsync(State state, float duration)
+        {
+            try
             {
-                case State.Normal:
-                    NormalTransition(instant);
-                    break;
-                case State.Hovered:
-                    HoveredTransition(instant);
-                    break;
-                case State.Pressed:
-                    PressedTransition(instant);
-                    break;
-                case State.Disabled:
-                    DisabledTransition(instant);
-                    break;
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    await Awaitable.NextFrameAsync(destroyCancellationToken);
+                }
+                PerformTransition(state, IsSelected(), duration <= 0);
             }
-        }
-
-        protected virtual void NormalTransition(bool instant)
-        {
-            //Debug.Log($"Current State: Normal");
-        }
-
-        protected virtual void HoveredTransition(bool instant)
-        {
-            //Debug.Log($"Current State: Hovered");
-        }
-
-        protected virtual void PressedTransition(bool instant)
-        {
-            //Debug.Log($"Current State: Pressed");
-        }
-
-        protected virtual void DisabledTransition(bool instant)
-        {
-            //Debug.Log($"Current State: Disabled");
+            catch (OperationCanceledException) { }
         }
 
         private void EvaluateAndTransition(BaseEventData eventData)
@@ -273,7 +258,7 @@ namespace boop
             if (state == _currentState) return;
 
             _currentState = state;
-            PerformStateTransition(_currentState, false);
+            PerformTransition(_currentState, IsSelected());
         }
 
         private void Navigate(AxisEventData eventData, Interactable interactable)

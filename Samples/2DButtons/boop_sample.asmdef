@@ -1,5 +1,5 @@
 {
-    "name": "boop.Sample.mvvm",
+    "name": "boop_sample",
     "rootNamespace": "",
     "references": [
         "GUID:cd48c43600c51af4b9230844a6f156ed"

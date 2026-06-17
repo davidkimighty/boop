@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace boop
@@ -7,7 +8,10 @@ namespace boop
     {
         public event Action<bool> OnClick;
 
-        protected bool _isToggled;
+        [SerializeField] protected bool _isToggled;
+        [SerializeField] protected float _submitTransitionDelay = 0.3f;
+
+        protected override bool IsSelected() => _isToggled;
 
         public void OnPointerClick(PointerEventData eventData)
         {
@@ -16,8 +20,7 @@ namespace boop
 
             _isToggled = !_isToggled;
             _currentState = GetCurrentState(eventData);
-            PerformStateTransition(_currentState, false);
-
+            PerformTransition(_currentState, IsSelected());
             OnClick?.Invoke(_isToggled);
         }
 
@@ -27,42 +30,17 @@ namespace boop
 
             _isToggled = !_isToggled;
             _currentState = GetCurrentState(eventData);
-            PerformStateTransition(_currentState, false);
-
+            PerformTransition(State.Pressed, IsSelected());
+            _ = PerformDelayedTransitionAsync(_currentState, _submitTransitionDelay);
             OnClick?.Invoke(_isToggled);
         }
 
-        protected override void PerformStateTransition(State state, bool instant)
+        public void SetToggle(bool on, bool instant)
         {
-            if (state != State.Disabled && _isToggled)
-                ToggledTransition(instant);
-
-            base.PerformStateTransition(state, instant);
-        }
-
-        protected override void NormalTransition(bool instant)
-        {
-            
-        }
-
-        protected override void HoveredTransition(bool instant)
-        {
-
-        }
-
-        protected override void PressedTransition(bool instant)
-        {
-            
-        }
-
-        protected override void DisabledTransition(bool instant)
-        {
-            
-        }
-
-        protected void ToggledTransition(bool instant)
-        {
-
+            _isToggled = on;
+            _currentState = State.Normal;
+            PerformTransition(_currentState, IsSelected(), instant);
+            OnClick?.Invoke(_isToggled);
         }
     }
 }
