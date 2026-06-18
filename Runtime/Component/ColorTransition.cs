@@ -11,10 +11,10 @@ namespace boop
         public struct ColorSetting
         {
             public Graphic Graphic;
-            public StateColorConfig Config;
+            public ColorTransitionConfig Config;
         }
 
-        private struct Fade
+        private struct Data
         {
             public Graphic Graphic;
             public Color Start;
@@ -26,16 +26,12 @@ namespace boop
 
         [SerializeField] private ColorSetting[] _settings;
 
-        private Fade[] _fades;
+        private Data[] _data;
         private CancellationTokenSource _cts;
 
         private void OnEnable()
         {
-            if (_settings == null) return;
-
-            int count = _settings.Length;
-            if (_fades == null || _fades.Length != count)
-                _fades = new Fade[count];
+            InitDataIfNeeded();
         }
 
         private void OnDisable()
@@ -47,6 +43,7 @@ namespace boop
         {
             if (_settings == null || _settings.Length == 0) return;
 
+            InitDataIfNeeded();
             CancelTransition();
 
             if (instant)
@@ -54,12 +51,12 @@ namespace boop
                 for (int i = 0; i < _settings.Length; ++i)
                 {
                     Graphic graphic = _settings[i].Graphic;
-                    StateColorConfig config = _settings[i].Config;
+                    ColorTransitionConfig config = _settings[i].Config;
                     if (graphic == null || config == null) continue;
-                    if (!TryGetStateColor(config, selected, state, out StateColor stateColor)) continue;
+                    if (!TryGetStateColor(config, selected, state, out StateTarget<Color> target)) continue;
 
-                    graphic.color = stateColor.Color;
-                    graphic.gameObject.SetActive(stateColor.Color.a > 0f);
+                    graphic.color = target.Value;
+                    graphic.gameObject.SetActive(target.Value.a > 0f);
                 }
                 return;
             }
@@ -75,25 +72,29 @@ namespace boop
             for (int i = 0; i < count; ++i)
             {
                 Graphic graphic = _settings[i].Graphic;
-                StateColorConfig config = _settings[i].Config;
-                if (graphic == null || config == null) continue;
+                ColorTransitionConfig config = _settings[i].Config;
+                if (graphic == null || config == null)
+                {
+                    _data[i] = default;
+                    continue;
+                }
 
-                bool found = TryGetStateColor(config, selected, state, out StateColor stateColor);
-                if (found && stateColor.Color.a > 0f && !graphic.gameObject.activeSelf)
+                bool found = TryGetStateColor(config, selected, state, out StateTarget<Color> target);
+                if (found && target.Value.a > 0f && !graphic.gameObject.activeSelf)
                     graphic.gameObject.SetActive(true);
 
                 bool active = found && graphic.gameObject.activeSelf;
-                _fades[i] = new Fade
+                _data[i] = new Data
                 {
                     Graphic = graphic,
                     Start = graphic.color,
-                    Target = stateColor.Color,
-                    Duration = stateColor.Duration,
-                    Curve = stateColor.Curve,
+                    Target = target.Value,
+                    Duration = target.Duration,
+                    Curve = target.Curve,
                     Active = active,
                 };
-                if (active && stateColor.Duration > maxDuration)
-                    maxDuration = stateColor.Duration;
+                if (active && target.Duration > maxDuration)
+                    maxDuration = target.Duration;
             }
 
             float elapsed = 0f;
@@ -106,14 +107,14 @@ namespace boop
                     elapsed += Time.unscaledDeltaTime;
                 }
 
-                for (int i = 0; i < _fades.Length; ++i)
+                for (int i = 0; i < _data.Length; ++i)
                 {
-                    Fade fade = _fades[i];
-                    if (!fade.Active) continue;
+                    Data data = _data[i];
+                    if (!data.Active) continue;
 
-                    fade.Graphic.color = fade.Target;
-                    if (fade.Target.a <= 0f)
-                        fade.Graphic.gameObject.SetActive(false);
+                    data.Graphic.color = data.Target;
+                    if (data.Target.a <= 0f)
+                        data.Graphic.gameObject.SetActive(false);
                 }
             }
             catch (OperationCanceledException) { }
@@ -121,15 +122,24 @@ namespace boop
 
         private void ApplyColor(float elapsed)
         {
-            for (int i = 0; i < _fades.Length; ++i)
+            for (int i = 0; i < _data.Length; ++i)
             {
-                ref Fade fade = ref _fades[i];
-                if (!fade.Active) continue;
+                ref Data data = ref _data[i];
+                if (!data.Active) continue;
 
-                float n = fade.Duration <= 0f ? 1f : Mathf.Clamp01(elapsed / fade.Duration);
-                float t = fade.Curve != null && fade.Curve.length > 0 ? fade.Curve.Evaluate(n) : n;
-                fade.Graphic.color = Color.LerpUnclamped(fade.Start, fade.Target, t);
+                float n = data.Duration <= 0f ? 1f : Mathf.Clamp01(elapsed / data.Duration);
+                float t = data.Curve != null && data.Curve.length > 0 ? data.Curve.Evaluate(n) : n;
+                data.Graphic.color = Color.LerpUnclamped(data.Start, data.Target, t);
             }
+        }
+
+        private void InitDataIfNeeded()
+        {
+            if (_settings == null) return;
+
+            int count = _settings.Length;
+            if (_data == null || _data.Length != count)
+                _data = new Data[count];
         }
 
         private void CancelTransition()
@@ -141,7 +151,7 @@ namespace boop
             _cts = null;
         }
 
-        private bool TryGetStateColor(StateColorConfig config, bool selected, Interactable.State state, out StateColor result)
+        private bool TryGetStateColor(ColorTransitionConfig config, bool selected, Interactable.State state, out StateTarget<Color> result)
         {
             if (FindStateColor(selected ? config.Selected : config.Normal, state, out result))
                 return true;
@@ -156,7 +166,7 @@ namespace boop
             return false;
         }
 
-        private bool FindStateColor(StateColor[] states, Interactable.State state, out StateColor result)
+        private bool FindStateColor(StateTarget<Color>[] states, Interactable.State state, out StateTarget<Color> result)
         {
             if (states != null)
             {

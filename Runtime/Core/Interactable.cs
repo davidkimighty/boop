@@ -5,7 +5,6 @@ using UnityEngine.EventSystems;
 
 namespace boop
 {
-    [ExecuteInEditMode]
     [SelectionBase]
     [DisallowMultipleComponent]
     public abstract class Interactable : UIBehaviour, IUIElement, IMoveHandler,
