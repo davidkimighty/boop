@@ -6,7 +6,7 @@ namespace boop
 {
     public class Toggle : Interactable, IPointerClickHandler, ISubmitHandler
     {
-        public event Action<bool> OnClick;
+        public event Action<Toggle, bool> OnClick;
 
         [SerializeField] protected bool _isToggled;
         [SerializeField] protected float _submitTransitionDelay = 0.3f;
@@ -21,7 +21,7 @@ namespace boop
             _isToggled = !_isToggled;
             _currentState = GetCurrentState(eventData);
             PerformTransition(_currentState, IsSelected());
-            OnClick?.Invoke(_isToggled);
+            OnClick?.Invoke(this, _isToggled);
         }
 
         public void OnSubmit(BaseEventData eventData)
@@ -32,15 +32,15 @@ namespace boop
             _currentState = GetCurrentState(eventData);
             PerformTransition(State.Pressed, IsSelected());
             _ = PerformDelayedTransitionAsync(_currentState, _submitTransitionDelay);
-            OnClick?.Invoke(_isToggled);
+            OnClick?.Invoke(this, _isToggled);
         }
 
-        public void SetToggle(bool on, bool instant)
+        public void SetToggle(bool on, bool notify = false, bool instant = false)
         {
             _isToggled = on;
             _currentState = State.Normal;
             PerformTransition(_currentState, IsSelected(), instant);
-            OnClick?.Invoke(_isToggled);
+            if (notify) OnClick?.Invoke(this, _isToggled);
         }
     }
 }
