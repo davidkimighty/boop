@@ -40,10 +40,11 @@ namespace boop
 
         public void Remove(Toggle toggle)
         {
-            if (!_toggles.Contains(toggle)) return;
+            int index = _toggles.IndexOf(toggle);
+            if (index < 0) return;
 
             toggle.OnClick -= DeselectOthers;
-            _toggles.Remove(toggle);
+            _toggles.RemoveAt(index);
         }
 
         public void DeselectAll()
