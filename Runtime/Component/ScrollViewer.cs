@@ -57,12 +57,18 @@ namespace boop
             }
 
             _scrollbarValue = _scrollbar.value;
+            if (_isScrolling)
+            {
+                if (_focusedIndex >= 0)
+                {
+                    OnUnfocusElement?.Invoke(_elements[_focusedIndex], _focusedIndex);
+                    _focusedIndex = -1;
+                }
+                return;
+            }
 
             int index = NearestAnchorIndex();
             if (index == _focusedIndex) return;
-
-            if (_focusedIndex >= 0)
-                OnUnfocusElement?.Invoke(_elements[_focusedIndex], _focusedIndex);
 
             _focusedIndex = index;
             OnFocusElement?.Invoke(_elements[index], index);
