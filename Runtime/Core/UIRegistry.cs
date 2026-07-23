@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace boop
@@ -20,6 +21,16 @@ namespace boop
 
         public void Show(EntityId id, bool bringToFront = true)
         {
+            _ = ShowAsync(id, bringToFront);
+        }
+
+        public void Hide(EntityId id)
+        {
+            _ = HideAsync(id);
+        }
+
+        public async Awaitable ShowAsync(EntityId id, bool bringToFront = true, CancellationToken token = default)
+        {
             if (!_byId.TryGetValue(id, out IUIElement element)) return;
 
             if (bringToFront)
@@ -27,14 +38,14 @@ namespace boop
                 // resort view order
             }
 
-            element.Show();
+            await element.ShowAsync(token);
         }
 
-        public void Hide(EntityId id)
+        public async Awaitable HideAsync(EntityId id, CancellationToken token = default)
         {
             if (!_byId.TryGetValue(id, out IUIElement element)) return;
 
-            element.Hide();
+            await element.HideAsync(token);
             // resort view order
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using UnityEngine;
 
 namespace boop
@@ -10,5 +11,8 @@ namespace boop
 
         void Show();
         void Hide();
+        void SetActive(bool active);
+        Awaitable ShowAsync(CancellationToken token = default);
+        Awaitable HideAsync(CancellationToken token = default);
     }
 }

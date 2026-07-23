@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -11,18 +12,24 @@ namespace boop
 
         [SerializeField] protected Canvas _canvas;
 
-        public Canvas Canvas => _canvas;
+        public virtual void Show() => _ = ShowAsync();
 
-        public virtual void Show()
+        public virtual void Hide() => _ = HideAsync();
+
+        public void SetActive(bool active) => _canvas.enabled = active;
+
+#pragma warning disable CS1998
+        public virtual async Awaitable ShowAsync(CancellationToken token = default)
         {
-            Canvas.enabled = true;
+            _canvas.enabled = true;
             OnShow?.Invoke(GetEntityId());
         }
 
-        public virtual void Hide()
+        public virtual async Awaitable HideAsync(CancellationToken token = default)
         {
-            Canvas.enabled = false;
+            _canvas.enabled = false;
             OnHide?.Invoke(GetEntityId());
         }
+#pragma warning restore CS1998
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -60,17 +61,25 @@ namespace boop
         }
 #endif
 
-        public virtual void Show()
+        public virtual void Show() => _ = ShowAsync();
+
+        public virtual void Hide() => _ = HideAsync();
+
+        public void SetActive(bool active) => gameObject.SetActive(active);
+
+#pragma warning disable CS1998
+        public virtual async Awaitable ShowAsync(CancellationToken token = default)
         {
             gameObject.SetActive(true);
             OnShow?.Invoke(GetEntityId());
         }
 
-        public virtual void Hide()
+        public virtual async Awaitable HideAsync(CancellationToken token = default)
         {
             gameObject.SetActive(false);
             OnHide?.Invoke(GetEntityId());
         }
+#pragma warning restore CS1998
 
         public virtual void OnMove(AxisEventData eventData)
         {
