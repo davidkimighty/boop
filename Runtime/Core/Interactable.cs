@@ -26,9 +26,8 @@ namespace boop
         protected static List<Interactable> s_interactables = new();
 
         [SerializeField] protected StateTransition[] _transitions;
-        
-        protected bool _isInteractable = true;
-        protected bool _groupAllowInteraction = true;
+        [SerializeField] protected bool _isInteractable = true;
+
         protected bool _isPointerDown;
         protected bool _isPointerInside;
         protected bool _hasSelection;
@@ -41,7 +40,9 @@ namespace boop
             s_interactables.Add(this);
 
             State state = State.Normal;
-            if (_hasSelection)
+            if (!IsInteractable())
+                state = State.Disabled;
+            else if (_hasSelection)
                 state = State.Hovered;
             _currentState = state;
             PerformTransition(_currentState, IsSelected());
@@ -57,15 +58,31 @@ namespace boop
 #if UNITY_EDITOR
         protected override void OnValidate()
         {
+            _currentState = GetCurrentState(null);
             PerformTransition(_currentState, IsSelected(), true);
         }
 #endif
+
+        public virtual bool IsInteractable() => _isInteractable;
 
         public virtual void Show() => _ = ShowAsync();
 
         public virtual void Hide() => _ = HideAsync();
 
         public virtual void SetActive(bool active) => gameObject.SetActive(active);
+
+        public virtual void SetInteractable(bool interactable, bool instant = false)
+        {
+            if (_isInteractable == interactable) return;
+
+            _isInteractable = interactable;
+            if (!interactable && EventSystem.current != null &&
+                EventSystem.current.currentSelectedGameObject == gameObject)
+                EventSystem.current.SetSelectedGameObject(null);
+
+            _currentState = GetCurrentState(null);
+            PerformTransition(_currentState, IsSelected(), instant);
+        }
 
 #pragma warning disable CS1998
         public virtual async Awaitable ShowAsync(CancellationToken token = default)
@@ -144,11 +161,6 @@ namespace boop
         {
             _hasSelection = false;
             EvaluateAndTransition(eventData);
-        }
-
-        public virtual bool IsInteractable()
-        {
-            return _isInteractable && _groupAllowInteraction;
         }
 
         public Interactable FindInteractable(Vector3 dir)
