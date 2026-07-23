@@ -65,7 +65,7 @@ namespace boop
 
         public virtual void Hide() => _ = HideAsync();
 
-        public void SetActive(bool active) => gameObject.SetActive(active);
+        public virtual void SetActive(bool active) => gameObject.SetActive(active);
 
 #pragma warning disable CS1998
         public virtual async Awaitable ShowAsync(CancellationToken token = default)
