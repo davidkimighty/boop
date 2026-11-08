@@ -135,8 +135,9 @@ namespace boop
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (IsInteractable())
-                EventSystem.current.SetSelectedGameObject(gameObject, eventData);
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem != null && IsInteractable())
+                eventSystem.SetSelectedGameObject(gameObject, eventData);
             
             _isPointerInside = true;
             EvaluateAndTransition(eventData);
@@ -144,8 +145,9 @@ namespace boop
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (EventSystem.current.currentSelectedGameObject == gameObject)
-                EventSystem.current.SetSelectedGameObject(null, eventData);
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem != null && eventSystem.currentSelectedGameObject == gameObject)
+                eventSystem.SetSelectedGameObject(null, eventData);
 
             _isPointerInside = false;
             EvaluateAndTransition(eventData);
